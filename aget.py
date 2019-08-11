@@ -4,10 +4,14 @@ import aiohttp
 import asyncio
 import sys
 
+import get
+
 async def fetch(session, url):
+    sys.stdout.write(f'Fetch {url} ... ')
     async with session.get(url) as response:
-        sys.stdout.write(f'Fetch {url} ... ')
-        return await response.text()
+        html = await response.text()
+    sys.stdout.write('done\n')
+    return (url, html)
 
 async def yield_targets(targets):
     for t in targets:
@@ -17,15 +21,9 @@ async def main(targets):
     pages = {}
     async with aiohttp.ClientSession() as session:
         async for url in yield_targets(targets):
-            html = await fetch(session, url)
-            sys.stdout.write('done\n')
+            url, html = await fetch(session, url)
             pages[url] = html
-    sum = 0
-    for url in sorted(pages):
-        size = len(pages[url])
-        print(url, size)
-        sum += size
-    print('Total', sum)
+    get.report(pages)
 
 if __name__ == '__main__':
     # loop = asyncio.get_event_loop()
